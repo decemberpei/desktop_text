@@ -24,7 +24,7 @@ namespace TextOnWallpaper
             //Application.Run(new Form1());
 
             // set auto start
-            AutoStart();
+            //AutoStart();
 
             // show init content
             string initContent = GenerateTextContent();
