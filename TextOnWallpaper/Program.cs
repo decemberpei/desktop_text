@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using IWshRuntimeLibrary;
+using System;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net;
-using System.Net.Sockets;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace TextOnWallpaper
@@ -23,12 +20,24 @@ namespace TextOnWallpaper
             Application.SetCompatibleTextRenderingDefault(false);
             //Application.Run(new Form1());
 
+            foreach (var process in Process.GetProcessesByName(Process.GetCurrentProcess().ProcessName))
+            {
+                if (process.Id != Process.GetCurrentProcess().Id)
+                {
+                    process.Kill();
+                }
+            }
+            foreach (var process in Process.GetProcessesByName("Bginfo64"))
+            {
+                process.Kill();
+            }
+
             // set auto start
-            //AutoStart();
+            AutoStart();
 
             // show init content
             string initContent = GenerateTextContent();
-            File.WriteAllText("TextShow.txt", initContent);
+            System.IO.File.WriteAllText("TextShow.txt", initContent);
             Thread.Sleep(1000);
             Process.Start("Bginfo64.exe", "TextShow.bgi /TIMER:0 /NOLICPROMPT");
 
@@ -44,7 +53,7 @@ namespace TextOnWallpaper
                 else
                 {
                     Console.WriteLine("Content changed, do a refresh .");
-                    File.WriteAllText("TextShow.txt", thisContent);
+                    System.IO.File.WriteAllText("TextShow.txt", thisContent);
                     Thread.Sleep(1000);
                     Process.Start("Bginfo64.exe", "TextShow.bgi /TIMER:0 /NOLICPROMPT");
                 }
@@ -53,13 +62,15 @@ namespace TextOnWallpaper
 
         public static void AutoStart()
         {
-            string src = AppDomain.CurrentDomain.FriendlyName + ".lnk";
-            string dest = "C:\\Users\\" + Environment.UserName + "\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\"
-                + src;
-            if (!File.Exists(dest))
-            {
-                File.Copy(src, dest, false);
-            }
+            string link = "C:\\Users\\" + Environment.UserName 
+                + "\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\"
+                    + AppDomain.CurrentDomain.FriendlyName + ".lnk";
+            var shell = new WshShell();
+            var shortcut = shell.CreateShortcut(link) as IWshShortcut;
+            shortcut.TargetPath = Application.ExecutablePath;
+            shortcut.WorkingDirectory = Application.StartupPath;
+            //shortcut...
+            shortcut.Save();
         }
 
         // override this function to do something different.
